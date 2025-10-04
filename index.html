@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>九宫格计数器</title>
+  <title>计数器</title>
   <meta name="description" content="下半屏九宫格按钮（1-9），点击对应数字计数并在上半屏显示的轻量移动网页小程序示例。" />
   <link rel="icon" href="assets/icon.png" />
   <link rel="manifest" href="manifest.json" />
@@ -24,16 +24,19 @@
     .app { flex: 1; display: flex; flex-direction: column; }
     .display { flex: 1; padding: 1rem; overflow-y: auto; }
     .title { font-size: 1.3rem; font-weight: bold; margin-bottom: .5rem; }
-    .summary { font-size: 1.1rem; margin-bottom: .5rem; }
     .counts .row { display: flex; align-items: center; margin-bottom: .4rem; }
     .counts .row span { width: 1.5rem; font-weight: bold; }
     .box { width: 18px; height: 18px; margin: 2px; border: 1px solid #374151; display: inline-block; border-radius: 3px; }
     .green { background: #4caf50; }
     .gray { background: #d1d5db; }
+    .button-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .button-row button { padding:.45rem .65rem; border-radius:10px; border:none; font-weight: 600; color:white; flex:1; min-width:70px; }
+    #abilityBtn { background:#0f62fe; border:1px solid #0f62fe; }
+    #toggleBtn { background:#f97316; border:1px solid #f97316; }
+    #resetBtn { background:white; color:#111827; border:1px solid #e5e7eb; }
     .grid-wrap { background: #fff; border-top: 1px solid #e5e7eb; padding: .5rem; }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
     .grid-btn {
-      aspect-ratio: 1;
       font-size: 1.4rem;
       font-weight: 600;
       border-radius: 12px;
@@ -41,6 +44,7 @@
       background: #f3f4f6;
       transition: background .2s;
       touch-action: manipulation;
+      aspect-ratio: 1/0.8; /* 扁一点 */
     }
     .grid-btn:active { background: #dbeafe; }
     .bar {
@@ -58,8 +62,6 @@
     }
     .bar.show { bottom: 1.2rem; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
-
-    /* 能力覆盖层样式 */
     #abilityOverlay {
       display:none;
       position:fixed;
@@ -76,22 +78,21 @@
   </style>
 </head>
 <body>
-  <main class="app" id="app">
-    <section class="display" id="display">
-      <div class="title" id="title">九宫格计数器（剩余 45/45）</div>
-      <div class="summary" id="summary">当前计数</div>
-      <div class="counts" id="countList" aria-hidden="false"></div>
+  <main class="app">
+    <section class="display">
+      <div class="title" id="title">计数器（剩余 45/45）</div>
 
-      <div style="margin-top:.8rem; display:flex; gap:.5rem; flex-wrap: wrap;">
-        <button id="exportBtn" style="border:none; padding:.45rem .65rem; border-radius:10px; background:#111827;color:white;">导出</button>
-        <button id="resetBtn" data-mode="normal" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
-        <button id="abilityBtn" style="border:1px solid #0f62fe; padding:.45rem .65rem; border-radius:10px; background:#0f62fe;color:white;">能力</button>
-        <button id="toggleBtn" style="border:1px solid #f97316; padding:.45rem .65rem; border-radius:10px; background:#f97316;color:white;">+/-</button>
+      <div class="button-row">
+        <button id="abilityBtn">能力</button>
+        <button id="toggleBtn">+/-</button>
+        <button id="resetBtn" data-mode="normal">重置</button>
       </div>
+
+      <div class="counts" id="countList" aria-hidden="false"></div>
     </section>
 
     <section class="grid-wrap" aria-hidden="false">
-      <div class="grid" role="application" aria-label="九宫格按键区域，数字 1 到 9">
+      <div class="grid">
         <button class="grid-btn" data-num="1">1</button>
         <button class="grid-btn" data-num="2">2</button>
         <button class="grid-btn" data-num="3">3</button>
@@ -111,31 +112,22 @@
 <pre>
 1 古代巨龙 
 掷骰：所有其他的玩家根据掷骰结果失去相当数量的生命。召唤巨龙失败则你失去相当数量的生命。
-
 2 黑暗幽灵
 所有其他玩家失去1点生命。你获得1点生命（最多6点生命）。
-
 3 甜蜜的梦
 掷骰：根据掷骰结果，你获得相当数量的生命（最多6点生命）。
-
 4 猫头鹰
 你可以查看一个秘密咒语石，并放到你的面前。如果这一轮你存活，每个可以让你额外多得1分。
-
 5 闪电暴风雨
 你左手和右手边的玩家各失去1点生命。
-
 6 暴风雪
 你左手边的玩家失去1点生命。
-
 7 火球
 你右手边的玩家失去1点生命。
-
 8 魔法药水
 你获得1点生命（最多6点生命）。
-
 9 力量药水
 你把成功使用的力量药水放到你的面前。每2个力量药水可以让你在使其他玩家失去生命时，失去生命的点数+1。
-
 （点击屏幕任意位置关闭此页面）
 </pre>
     </div>
@@ -156,9 +148,8 @@
 
     const countList = document.getElementById("countList");
     const title = document.getElementById("title");
-    const summary = document.getElementById("summary");
     const ariaLive = document.getElementById("ariaLive");
-    const totalGreenBoxes = 1+2+3+4+5+6+7+8+9; // 45
+    const totalGreenBoxes = 45;
 
     let mode = "increase";
     const toggleBtn = document.getElementById("toggleBtn");
@@ -191,11 +182,9 @@
         }
         countList.appendChild(row);
       }
-      title.textContent=`九宫格计数器（剩余 ${remaining}/${totalGreenBoxes}）`;
-      summary.textContent=remaining<totalGreenBoxes?"当前状态：":"当前计数为空";
+      title.textContent=`计数器（剩余 ${remaining}/${totalGreenBoxes}）`;
     }
 
-    // 数字按钮事件
     document.querySelectorAll(".grid-btn").forEach(btn=>{
       btn.addEventListener("click",()=>{
         const num=parseInt(btn.dataset.num);
@@ -204,7 +193,6 @@
         localStorage.setItem("counterState",JSON.stringify(state));
         renderCounts();
         ariaLive.textContent=`数字 ${num} 计数已更新`;
-
         // 点击数字时恢复重置按钮
         if(resetBtn.dataset.mode==="undo"){
           resetBtn.textContent="重置";
@@ -229,15 +217,6 @@
         resetBtn.textContent="重置（撤销）";
         resetBtn.dataset.mode="undo";
       }
-    });
-
-    // 导出按钮
-    document.getElementById("exportBtn").addEventListener("click",()=>{
-      const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement("a");
-      a.href=url; a.download="state.json"; a.click();
-      URL.revokeObjectURL(url);
     });
 
     // 能力按钮
