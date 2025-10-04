@@ -1,114 +1,112 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>计数器</title>
-  <meta name="description" content="下半屏九宫格按钮（1-9），点击对应数字计数并在上半屏显示的轻量移动网页小程序示例。" />
-  <link rel="icon" href="assets/icon.png" />
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0f62fe" />
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      background: #f9fafb;
-      color: #111827;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    .app { flex: 1; display: flex; flex-direction: column; }
-    .display { flex: 1; padding: 1rem; overflow-y: auto; }
-    .title { font-size: 1.3rem; font-weight: bold; margin-bottom: .5rem; }
-    .counts .row { display: flex; align-items: center; margin-bottom: .4rem; }
-    .counts .row span { width: 1.5rem; font-weight: bold; }
-    .box { width: 18px; height: 18px; margin: 2px; border: 1px solid #374151; display: inline-block; border-radius: 3px; }
-    .green { background: #4caf50; }
-    .gray { background: #d1d5db; }
-    .button-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
-    .button-row button { padding:.45rem .65rem; border-radius:10px; border:none; font-weight: 600; color:white; flex:1; min-width:70px; }
-    #abilityBtn { background:#0f62fe; border:1px solid #0f62fe; }
-    #toggleBtn { background:#f97316; border:1px solid #f97316; }
-    #resetBtn { background:white; color:#111827; border:1px solid #e5e7eb; }
-    .grid-wrap { background: #fff; border-top: 1px solid #e5e7eb; padding: .5rem; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
-    .grid-btn {
-      font-size: 1.4rem;
-      font-weight: 600;
-      border-radius: 12px;
-      border: 1px solid #d1d5db;
-      background: #f3f4f6;
-      transition: background .2s;
-      touch-action: manipulation;
-      aspect-ratio: 1/0.8; /* 扁一点 */
-    }
-    .grid-btn:active { background: #dbeafe; }
-    .bar {
-      position: fixed;
-      bottom: -3rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.85);
-      color: #fff;
-      padding: .6rem 1rem;
-      border-radius: 12px;
-      font-size: .9rem;
-      transition: bottom .3s;
-      z-index: 1000;
-    }
-    .bar.show { bottom: 1.2rem; }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
-    #abilityOverlay {
-      display:none;
-      position:fixed;
-      top:0; left:0; right:0; bottom:0;
-      background:#fff;
-      color:#111827;
-      padding:1rem;
-      font-size:1rem;
-      line-height:1.5;
-      overflow-y:auto;
-      z-index:2000;
-    }
-    #abilityOverlay pre { white-space: pre-wrap; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>计数器</title>
+<meta name="description" content="下半屏九宫格按钮（1-9），点击对应数字计数并在上半屏显示的轻量移动网页小程序示例。" />
+<link rel="icon" href="assets/icon.png" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#0f62fe" />
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f9fafb;
+  color: #111827;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.app { flex: 1; display: flex; flex-direction: column; }
+.display { flex: 0 0 45%; padding: 0.8rem 1rem 0.4rem 1rem; overflow-y: auto; }
+.title { font-size: 1.3rem; font-weight: bold; margin-bottom: 0.3rem; }
+.counts { margin: 0; padding: 0; }
+.counts .row { display: flex; align-items: center; margin: 0 0 2px 0; }
+.counts .row span { width: 1.5rem; font-weight: bold; }
+.box { width: 18px; height: 18px; margin: 2px; border: 1px solid #374151; display: inline-block; border-radius: 3px; }
+.green { background: #4caf50; }
+.gray { background: #d1d5db; }
+.button-row { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+.button-row button { padding:.45rem .65rem; border-radius:10px; border:none; font-weight: 600; color:white; flex:1; min-width:70px; }
+#abilityBtn { background:#0f62fe; border:1px solid #0f62fe; }
+#toggleBtn { background:#f97316; border:1px solid #f97316; }
+#resetBtn { background:white; color:#111827; border:1px solid #e5e7eb; }
+.grid-wrap { flex:1; background: #fff; border-top: 1px solid #e5e7eb; padding: .5rem; display:flex; align-items:center; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; width: 100%; }
+.grid-btn {
+  font-size: 1.4rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #f3f4f6;
+  transition: background .2s;
+  touch-action: manipulation;
+  aspect-ratio: 1/0.7; /* 更扁 */
+}
+.grid-btn:active { background: #dbeafe; }
+.bar {
+  position: fixed;
+  bottom: -3rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  padding: .6rem 1rem;
+  border-radius: 12px;
+  font-size: .9rem;
+  transition: bottom .3s;
+  z-index: 1000;
+}
+.bar.show { bottom: 1.2rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+#abilityOverlay {
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0; bottom:0;
+  background:#fff;
+  color:#111827;
+  padding:1rem;
+  font-size:1rem;
+  line-height:1.5;
+  overflow-y:auto;
+  z-index:2000;
+}
+#abilityOverlay pre { white-space: pre-wrap; }
+</style>
 </head>
 <body>
-  <main class="app">
-    <section class="display">
-      <div class="title" id="title">计数器（剩余 45/45）</div>
+<main class="app">
+<section class="display">
+  <div class="title" id="title">计数器（剩余 45/45）</div>
+  <div class="button-row">
+    <button id="abilityBtn">能力</button>
+    <button id="toggleBtn">+/-</button>
+    <button id="resetBtn" data-mode="normal">重置</button>
+  </div>
+  <div class="counts" id="countList" aria-hidden="false"></div>
+</section>
 
-      <div class="button-row">
-        <button id="abilityBtn">能力</button>
-        <button id="toggleBtn">+/-</button>
-        <button id="resetBtn" data-mode="normal">重置</button>
-      </div>
+<section class="grid-wrap" aria-hidden="false">
+  <div class="grid">
+    <button class="grid-btn" data-num="1">1</button>
+    <button class="grid-btn" data-num="2">2</button>
+    <button class="grid-btn" data-num="3">3</button>
+    <button class="grid-btn" data-num="4">4</button>
+    <button class="grid-btn" data-num="5">5</button>
+    <button class="grid-btn" data-num="6">6</button>
+    <button class="grid-btn" data-num="7">7</button>
+    <button class="grid-btn" data-num="8">8</button>
+    <button class="grid-btn" data-num="9">9</button>
+  </div>
+</section>
 
-      <div class="counts" id="countList" aria-hidden="false"></div>
-    </section>
-
-    <section class="grid-wrap" aria-hidden="false">
-      <div class="grid">
-        <button class="grid-btn" data-num="1">1</button>
-        <button class="grid-btn" data-num="2">2</button>
-        <button class="grid-btn" data-num="3">3</button>
-        <button class="grid-btn" data-num="4">4</button>
-        <button class="grid-btn" data-num="5">5</button>
-        <button class="grid-btn" data-num="6">6</button>
-        <button class="grid-btn" data-num="7">7</button>
-        <button class="grid-btn" data-num="8">8</button>
-        <button class="grid-btn" data-num="9">9</button>
-      </div>
-    </section>
-
-    <div id="ariaLive" class="sr-only" aria-live="polite"></div>
-    <div id="hintBar" class="bar" role="status" aria-hidden="true"></div>
-
-    <div id="abilityOverlay">
+<div id="ariaLive" class="sr-only" aria-live="polite"></div>
+<div id="hintBar" class="bar" role="status" aria-hidden="true"></div>
+<div id="abilityOverlay">
 <pre>
 1 古代巨龙 
 掷骰：所有其他的玩家根据掷骰结果失去相当数量的生命。召唤巨龙失败则你失去相当数量的生命。
@@ -130,127 +128,124 @@
 你把成功使用的力量药水放到你的面前。每2个力量药水可以让你在使其他玩家失去生命时，失去生命的点数+1。
 （点击屏幕任意位置关闭此页面）
 </pre>
-    </div>
-  </main>
+</div>
+</main>
 
-  <script>
-    // 防双击缩放
-    let lastTouchTime = 0;
-    document.addEventListener('touchstart', function(event) {
-      const now = new Date().getTime();
-      if (now - lastTouchTime <= 50) event.preventDefault();
-      lastTouchTime = now;
-    }, { passive: false });
+<script>
+// 防双击缩放
+let lastTouchTime = 0;
+document.addEventListener('touchstart', function(event) {
+  const now = new Date().getTime();
+  if (now - lastTouchTime <= 50) event.preventDefault();
+  lastTouchTime = now;
+}, { passive: false });
 
-    // 初始化状态
-    let state = JSON.parse(localStorage.getItem("counterState") || "{}");
-    for (let i=1;i<=9;i++) if(state[i]===undefined) state[i]=0;
+// 初始化状态
+let state = JSON.parse(localStorage.getItem("counterState") || "{}");
+for(let i=1;i<=9;i++) if(state[i]===undefined) state[i]=0;
 
-    const countList = document.getElementById("countList");
-    const title = document.getElementById("title");
-    const ariaLive = document.getElementById("ariaLive");
-    const totalGreenBoxes = 45;
+const countList = document.getElementById("countList");
+const title = document.getElementById("title");
+const ariaLive = document.getElementById("ariaLive");
+const totalGreenBoxes = 45;
 
-    let mode = "increase";
-    const toggleBtn = document.getElementById("toggleBtn");
-    toggleBtn.addEventListener("click",()=>{
-      mode = mode==="increase"?"decrease":"increase";
-      toggleBtn.textContent = mode==="increase"?"+/-":"+/- (减少)";
-      toggleBtn.style.background = mode==="increase"?"#f97316":"#4b5563";
-    });
+let mode = "increase";
+const toggleBtn = document.getElementById("toggleBtn");
+toggleBtn.addEventListener("click",()=>{
+  mode = mode==="increase"?"decrease":"increase";
+  toggleBtn.textContent = mode==="increase"?"+/-":"+/- (减少)";
+  toggleBtn.style.background = mode==="increase"?"#f97316":"#4b5563";
+});
 
-    let backupState = null;
-    const resetBtn = document.getElementById("resetBtn");
+let backupState = null;
+const resetBtn = document.getElementById("resetBtn");
 
-    function renderCounts(){
-      countList.innerHTML="";
-      let remaining=0;
-      for(let i=1;i<=9;i++){
-        const row=document.createElement("div");
-        row.className="row";
-        row.setAttribute("data-num",i);
-        const label=document.createElement("span");
-        label.textContent=i;
-        row.appendChild(label);
-        for(let j=0;j<i;j++){
-          const box=document.createElement("div");
-          if(j<i-state[i]){
-            box.className="box green";
-            remaining++;
-          }else box.className="box gray";
-          row.appendChild(box);
-        }
-        countList.appendChild(row);
-      }
-      title.textContent=`计数器（剩余 ${remaining}/${totalGreenBoxes}）`;
+function renderCounts(){
+  countList.innerHTML="";
+  let remaining=0;
+  for(let i=1;i<=9;i++){
+    const row=document.createElement("div");
+    row.className="row";
+    row.setAttribute("data-num",i);
+    const label=document.createElement("span");
+    label.textContent=i;
+    row.appendChild(label);
+    for(let j=0;j<i;j++){
+      const box=document.createElement("div");
+      if(j<i-state[i]){
+        box.className="box green";
+        remaining++;
+      }else box.className="box gray";
+      row.appendChild(box);
     }
+    countList.appendChild(row);
+  }
+  title.textContent=`计数器（剩余 ${remaining}/${totalGreenBoxes}）`;
+}
 
-    document.querySelectorAll(".grid-btn").forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        const num=parseInt(btn.dataset.num);
-        if(mode==="increase"&&state[num]<num) state[num]++;
-        else if(mode==="decrease"&&state[num]>0) state[num]--;
-        localStorage.setItem("counterState",JSON.stringify(state));
-        renderCounts();
-        ariaLive.textContent=`数字 ${num} 计数已更新`;
-        // 点击数字时恢复重置按钮
-        if(resetBtn.dataset.mode==="undo"){
-          resetBtn.textContent="重置";
-          resetBtn.dataset.mode="normal";
-          backupState=null;
-        }
-      });
-    });
-
-    // 重置按钮
-    resetBtn.addEventListener("click",()=>{
-      if(resetBtn.dataset.mode==="undo"){
-        if(backupState){state=JSON.parse(JSON.stringify(backupState)); localStorage.setItem("counterState",JSON.stringify(state)); renderCounts();}
-        backupState=null;
-        resetBtn.textContent="重置";
-        resetBtn.dataset.mode="normal";
-      }else{
-        backupState=JSON.parse(JSON.stringify(state));
-        for(let i=1;i<=9;i++) state[i]=0;
-        localStorage.setItem("counterState",JSON.stringify(state));
-        renderCounts();
-        resetBtn.textContent="重置（撤销）";
-        resetBtn.dataset.mode="undo";
-      }
-    });
-
-    // 能力按钮
-    const abilityBtn=document.getElementById("abilityBtn");
-    const abilityOverlay=document.getElementById("abilityOverlay");
-    abilityBtn.addEventListener("click",()=>{abilityOverlay.style.display="block";});
-    abilityOverlay.addEventListener("click",()=>{abilityOverlay.style.display="none";});
-
+document.querySelectorAll(".grid-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const num=parseInt(btn.dataset.num);
+    if(mode==="increase"&&state[num]<num) state[num]++;
+    else if(mode==="decrease"&&state[num]>0) state[num]--;
+    localStorage.setItem("counterState",JSON.stringify(state));
     renderCounts();
+    ariaLive.textContent=`数字 ${num} 计数已更新`;
+    if(resetBtn.dataset.mode==="undo"){
+      resetBtn.textContent="重置";
+      resetBtn.dataset.mode="normal";
+      backupState=null;
+    }
+  });
+});
 
-    // Service Worker
-    if('serviceWorker' in navigator){
-      window.addEventListener('load',()=>{
-        navigator.serviceWorker.register('sw.js')
-        .then(reg=>{
-          console.log('Service Worker 注册成功:',reg.scope);
-          reg.onupdatefound=()=>{
-            const newWorker=reg.installing;
-            newWorker.onstatechange=()=>{
-              if(newWorker.state==='installed'&&navigator.serviceWorker.controller) showUpdateBar();
-            }
-          }
-        }).catch(err=>console.error('Service Worker 注册失败:',err));
-      });
-      navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
-    }
-    function showUpdateBar(){
-      const bar=document.getElementById('hintBar');
-      bar.textContent='发现新版本，点击刷新';
-      bar.setAttribute('aria-hidden','false');
-      bar.classList.add('show');
-      bar.style.cursor='pointer';
-      bar.addEventListener('click',()=>{if(navigator.serviceWorker.waiting) navigator.serviceWorker.waiting.postMessage({action:'skipWaiting'});});
-    }
-  </script>
+resetBtn.addEventListener("click",()=>{
+  if(resetBtn.dataset.mode==="undo"){
+    if(backupState){state=JSON.parse(JSON.stringify(backupState)); localStorage.setItem("counterState",JSON.stringify(state)); renderCounts();}
+    backupState=null;
+    resetBtn.textContent="重置";
+    resetBtn.dataset.mode="normal";
+  }else{
+    backupState=JSON.parse(JSON.stringify(state));
+    for(let i=1;i<=9;i++) state[i]=0;
+    localStorage.setItem("counterState",JSON.stringify(state));
+    renderCounts();
+    resetBtn.textContent="重置（撤销）";
+    resetBtn.dataset.mode="undo";
+  }
+});
+
+const abilityBtn=document.getElementById("abilityBtn");
+const abilityOverlay=document.getElementById("abilityOverlay");
+abilityBtn.addEventListener("click",()=>{abilityOverlay.style.display="block";});
+abilityOverlay.addEventListener("click",()=>{abilityOverlay.style.display="none";});
+
+renderCounts();
+
+// Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js')
+    .then(reg=>{
+      console.log('Service Worker 注册成功:',reg.scope);
+      reg.onupdatefound=()=>{
+        const newWorker=reg.installing;
+        newWorker.onstatechange=()=>{
+          if(newWorker.state==='installed'&&navigator.serviceWorker.controller) showUpdateBar();
+        }
+      }
+    }).catch(err=>console.error('Service Worker 注册失败:',err));
+  });
+  navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
+}
+function showUpdateBar(){
+  const bar=document.getElementById('hintBar');
+  bar.textContent='发现新版本，点击刷新';
+  bar.setAttribute('aria-hidden','false');
+  bar.classList.add('show');
+  bar.style.cursor='pointer';
+  bar.addEventListener('click',()=>{if(navigator.serviceWorker.waiting) navigator.serviceWorker.waiting.postMessage({action:'skipWaiting'});});
+}
+</script>
 </body>
 </html>
