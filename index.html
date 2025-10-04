@@ -83,9 +83,9 @@
       <div class="counts" id="countList" aria-hidden="false"></div>
 
       <!-- 工具按钮区域 -->
-      <div style="margin-top:.8rem; display:flex; gap:.5rem;">
+      <div style="margin-top:.8rem; display:flex; gap:.5rem; flex-wrap: wrap;">
         <button id="exportBtn" style="border:none; padding:.45rem .65rem; border-radius:10px; background:#111827;color:white;">导出</button>
-        <button id="resetBtn" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
+        <button id="resetBtn" data-mode="normal" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
         <button id="abilityBtn" style="border:1px solid #0f62fe; padding:.45rem .65rem; border-radius:10px; background:#0f62fe;color:white;">能力</button>
         <button id="toggleBtn" style="border:1px solid #f97316; padding:.45rem .65rem; border-radius:10px; background:#f97316;color:white;">+/-</button>
       </div>
@@ -144,7 +144,7 @@
   </main>
 
   <script>
-    // 阻止快速双击缩放
+    // 防双击缩放
     let lastTouchTime = 0;
     document.addEventListener('touchstart', function(event) {
       const now = new Date().getTime();
@@ -162,9 +162,7 @@
     const ariaLive = document.getElementById("ariaLive");
     const totalGreenBoxes = 1+2+3+4+5+6+7+8+9; // 45
 
-    // 默认模式：increase / decrease
-    let mode = "increase";
-
+    let mode = "increase"; // 默认增加模式
     const toggleBtn = document.getElementById("toggleBtn");
     toggleBtn.addEventListener("click", () => {
       mode = mode === "increase" ? "decrease" : "increase";
@@ -205,33 +203,38 @@
       summary.textContent = hasAny ? "当前状态：" : "当前计数为空";
     }
 
-    // 数字按钮点击事件
+    // 数字按钮
     document.querySelectorAll(".grid-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const num = parseInt(btn.dataset.num);
         if (mode === "increase") {
-          if (state[num] < num) {
-            state[num]++;
-            localStorage.setItem("counterState", JSON.stringify(state));
-            renderCounts();
-            ariaLive.textContent = `数字 ${num} 变灰 ${state[num]} 个方框`;
-          }
-        } else { // decrease 模式
-          if (state[num] > 0) {
-            state[num]--;
-            localStorage.setItem("counterState", JSON.stringify(state));
-            renderCounts();
-            ariaLive.textContent = `数字 ${num} 变绿 ${state[num]} 个方框`;
-          }
+          if (state[num] < num) { state[num]++; renderCounts(); ariaLive.textContent = `数字 ${num} 变灰 ${state[num]} 个方框`; }
+        } else {
+          if (state[num] > 0) { state[num]--; renderCounts(); ariaLive.textContent = `数字 ${num} 变绿 ${state[num]} 个方框`; }
         }
+        localStorage.setItem("counterState", JSON.stringify(state));
       });
     });
 
-    // 重置按钮
-    document.getElementById("resetBtn").addEventListener("click", () => {
-      for (let i = 1; i <= 9; i++) state[i] = 0;
-      localStorage.setItem("counterState", JSON.stringify(state));
-      renderCounts();
+    // 重置按钮（增加撤销功能）
+    let backupState = null;
+    const resetBtn = document.getElementById("resetBtn");
+    resetBtn.addEventListener("click", () => {
+      if (resetBtn.dataset.mode === "undo") {
+        // 撤销重置
+        if (backupState) { state = JSON.parse(JSON.stringify(backupState)); renderCounts(); localStorage.setItem("counterState", JSON.stringify(state)); }
+        backupState = null;
+        resetBtn.textContent = "重置";
+        resetBtn.dataset.mode = "normal";
+      } else {
+        // 执行重置
+        backupState = JSON.parse(JSON.stringify(state));
+        for (let i = 1; i <= 9; i++) state[i] = 0;
+        renderCounts();
+        localStorage.setItem("counterState", JSON.stringify(state));
+        resetBtn.textContent = "重置（撤销）";
+        resetBtn.dataset.mode = "undo";
+      }
     });
 
     // 导出按钮
@@ -253,7 +256,7 @@
 
     renderCounts();
 
-    // 注册 Service Worker
+    // Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
@@ -262,9 +265,7 @@
             reg.onupdatefound = () => {
               const newWorker = reg.installing;
               newWorker.onstatechange = () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  showUpdateBar();
-                }
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) showUpdateBar();
               };
             };
           })
@@ -279,11 +280,7 @@
       bar.setAttribute('aria-hidden', 'false');
       bar.classList.add('show');
       bar.style.cursor = 'pointer';
-      bar.addEventListener('click', () => {
-        if (navigator.serviceWorker.waiting) {
-          navigator.serviceWorker.waiting.postMessage({ action: 'skipWaiting' });
-        }
-      });
+      bar.addEventListener('click', () => { if (navigator.serviceWorker.waiting) navigator.serviceWorker.waiting.postMessage({ action: 'skipWaiting' }); });
     }
   </script>
 </body>
