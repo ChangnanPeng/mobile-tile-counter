@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <!-- 防止移动端双击缩放 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>九宫格计数器</title>
   <meta name="description" content="下半屏九宫格按钮（1-9），点击对应数字计数并在上半屏显示的轻量移动网页小程序示例。" />
@@ -88,6 +87,7 @@
         <button id="exportBtn" style="border:none; padding:.45rem .65rem; border-radius:10px; background:#111827;color:white;">导出</button>
         <button id="resetBtn" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
         <button id="abilityBtn" style="border:1px solid #0f62fe; padding:.45rem .65rem; border-radius:10px; background:#0f62fe;color:white;">能力</button>
+        <button id="toggleBtn" style="border:1px solid #f97316; padding:.45rem .65rem; border-radius:10px; background:#f97316;color:white;">+/-</button>
       </div>
     </section>
 
@@ -113,22 +113,31 @@
 <pre>
 1 古代巨龙 
 掷骰：所有其他的玩家根据掷骰结果失去相当数量的生命。召唤巨龙失败则你失去相当数量的生命。
+
 2 黑暗幽灵
 所有其他玩家失去1点生命。你获得1点生命（最多6点生命）。
+
 3 甜蜜的梦
 掷骰：根据掷骰结果，你获得相当数量的生命（最多6点生命）。
+
 4 猫头鹰
 你可以查看一个秘密咒语石，并放到你的面前。如果这一轮你存活，每个可以让你额外多得1分。
+
 5 闪电暴风雨
 你左手和右手边的玩家各失去1点生命。
+
 6 暴风雪
 你左手边的玩家失去1点生命。
+
 7 火球
 你右手边的玩家失去1点生命。
+
 8 魔法药水
 你获得1点生命（最多6点生命）。
+
 9 力量药水
 你把成功使用的力量药水放到你的面前。每2个力量药水可以让你在使其他玩家失去生命时，失去生命的点数+1。
+
 （点击屏幕任意位置关闭此页面）
 </pre>
     </div>
@@ -139,7 +148,7 @@
     let lastTouchTime = 0;
     document.addEventListener('touchstart', function(event) {
       const now = new Date().getTime();
-      if (now - lastTouchTime <= 300) { event.preventDefault(); }
+      if (now - lastTouchTime <= 50) { event.preventDefault(); }
       lastTouchTime = now;
     }, { passive: false });
 
@@ -152,6 +161,16 @@
     const title = document.getElementById("title");
     const ariaLive = document.getElementById("ariaLive");
     const totalGreenBoxes = 1+2+3+4+5+6+7+8+9; // 45
+
+    // 默认模式：increase / decrease
+    let mode = "increase";
+
+    const toggleBtn = document.getElementById("toggleBtn");
+    toggleBtn.addEventListener("click", () => {
+      mode = mode === "increase" ? "decrease" : "increase";
+      toggleBtn.textContent = mode === "increase" ? "+/-" : "+/- (减少)";
+      toggleBtn.style.background = mode === "increase" ? "#f97316" : "#4b5563";
+    });
 
     function renderCounts() {
       countList.innerHTML = "";
@@ -186,15 +205,24 @@
       summary.textContent = hasAny ? "当前状态：" : "当前计数为空";
     }
 
-    // 数字按钮点击
+    // 数字按钮点击事件
     document.querySelectorAll(".grid-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const num = parseInt(btn.dataset.num);
-        if (state[num] < num) {
-          state[num]++;
-          localStorage.setItem("counterState", JSON.stringify(state));
-          renderCounts();
-          ariaLive.textContent = `数字 ${num} 变灰 ${state[num]} 个方框`;
+        if (mode === "increase") {
+          if (state[num] < num) {
+            state[num]++;
+            localStorage.setItem("counterState", JSON.stringify(state));
+            renderCounts();
+            ariaLive.textContent = `数字 ${num} 变灰 ${state[num]} 个方框`;
+          }
+        } else { // decrease 模式
+          if (state[num] > 0) {
+            state[num]--;
+            localStorage.setItem("counterState", JSON.stringify(state));
+            renderCounts();
+            ariaLive.textContent = `数字 ${num} 变绿 ${state[num]} 个方框`;
+          }
         }
       });
     });
