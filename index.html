@@ -18,9 +18,9 @@
       height: 100vh;
       background: #f9fafb;
       color: #111827;
-      touch-action: manipulation; /* 禁止双击缩放 */
-      -webkit-tap-highlight-color: transparent; /* 去掉点击高亮 */
-      user-select: none; /* 禁止选中文本 */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
     .app { flex: 1; display: flex; flex-direction: column; }
     .display { flex: 1; padding: 1rem; overflow-y: auto; }
@@ -41,7 +41,7 @@
       border: 1px solid #d1d5db;
       background: #f3f4f6;
       transition: background .2s;
-      touch-action: manipulation; /* 避免按钮双击缩放 */
+      touch-action: manipulation;
     }
     .grid-btn:active { background: #dbeafe; }
     .bar {
@@ -59,6 +59,21 @@
     }
     .bar.show { bottom: 1.2rem; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    /* 能力覆盖层样式 */
+    #abilityOverlay {
+      display:none;
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background:#fff;
+      color:#111827;
+      padding:1rem;
+      font-size:1rem;
+      line-height:1.5;
+      overflow-y:auto;
+      z-index:2000;
+    }
+    #abilityOverlay pre { white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -68,9 +83,11 @@
       <div class="summary" id="summary">当前计数</div>
       <div class="counts" id="countList" aria-hidden="false"></div>
 
+      <!-- 工具按钮区域 -->
       <div style="margin-top:.8rem; display:flex; gap:.5rem;">
         <button id="exportBtn" style="border:none; padding:.45rem .65rem; border-radius:10px; background:#111827;color:white;">导出</button>
         <button id="resetBtn" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
+        <button id="abilityBtn" style="border:1px solid #0f62fe; padding:.45rem .65rem; border-radius:10px; background:#0f62fe;color:white;">能力</button>
       </div>
     </section>
 
@@ -90,6 +107,40 @@
 
     <div id="ariaLive" class="sr-only" aria-live="polite"></div>
     <div id="hintBar" class="bar" role="status" aria-hidden="true"></div>
+
+    <!-- 能力覆盖层 -->
+    <div id="abilityOverlay">
+<pre>
+1 古代巨龙 
+掷骰：所有其他的玩家根据掷骰结果失去相当数量的生命。召唤巨龙失败则你失去相当数量的生命。
+
+2 黑暗幽灵
+所有其他玩家失去1点生命。你获得1点生命（最多6点生命）。
+
+3 甜蜜的梦
+掷骰：根据掷骰结果，你获得相当数量的生命（最多6点生命）。
+
+4 猫头鹰
+你可以查看一个秘密咒语石，并放到你的面前。如果这一轮你存活，每个可以让你额外多得1分。
+
+5 闪电暴风雨
+你左手和右手边的玩家各失去1点生命。
+
+6 暴风雪
+你左手边的玩家失去1点生命。
+
+7 火球
+你右手边的玩家失去1点生命。
+
+8 魔法药水
+你获得1点生命（最多6点生命）。
+
+9 力量药水
+你把成功使用的力量药水放到你的面前。每2个力量药水可以让你在使其他玩家失去生命时，失去生命的点数+1。
+
+（点击屏幕任意位置关闭此页面）
+</pre>
+    </div>
   </main>
 
   <script>
@@ -97,9 +148,7 @@
     let lastTouchTime = 0;
     document.addEventListener('touchstart', function(event) {
       const now = new Date().getTime();
-      if (now - lastTouchTime <= 300) {
-        event.preventDefault();
-      }
+      if (now - lastTouchTime <= 50) { event.preventDefault(); }
       lastTouchTime = now;
     }, { passive: false });
 
@@ -144,12 +193,14 @@
       });
     });
 
+    // 重置按钮
     document.getElementById("resetBtn").addEventListener("click", () => {
       for (let i = 1; i <= 9; i++) state[i] = 0;
       localStorage.setItem("counterState", JSON.stringify(state));
       renderCounts();
     });
 
+    // 导出按钮
     document.getElementById("exportBtn").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
       const url = URL.createObjectURL(blob);
@@ -159,6 +210,12 @@
       a.click();
       URL.revokeObjectURL(url);
     });
+
+    // 能力按钮 & 覆盖层
+    const abilityBtn = document.getElementById("abilityBtn");
+    const abilityOverlay = document.getElementById("abilityOverlay");
+    abilityBtn.addEventListener("click", () => { abilityOverlay.style.display = "block"; });
+    abilityOverlay.addEventListener("click", () => { abilityOverlay.style.display = "none"; });
 
     renderCounts();
 
