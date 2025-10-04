@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>九宫格计数器</title>
+  <meta name="description" content="下半屏九宫格按钮（1-9），点击对应数字计数并在上半屏显示的轻量移动网页小程序示例。" />
+  <link rel="icon" href="assets/icon.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f62fe" />
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: #f9fafb;
+      color: #111827;
+    }
+    .app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .display {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    .title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      margin-bottom: .5rem;
+    }
+    .summary {
+      font-size: 1.1rem;
+      margin-bottom: .5rem;
+    }
+    .counts {
+      line-height: 1.8;
+    }
+    .grid-wrap {
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      padding: .5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .5rem;
+    }
+    .grid-btn {
+      aspect-ratio: 1;
+      font-size: 1.4rem;
+      font-weight: 600;
+      border-radius: 12px;
+      border: 1px solid #d1d5db;
+      background: #f3f4f6;
+      transition: background .2s;
+    }
+    .grid-btn:active {
+      background: #dbeafe;
+    }
+    .bar {
+      position: fixed;
+      bottom: -3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: .6rem 1rem;
+      border-radius: 12px;
+      font-size: .9rem;
+      transition: bottom .3s;
+      z-index: 1000;
+    }
+    .bar.show {
+      bottom: 1.2rem;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <!-- 上半屏显示区域 -->
+    <section class="display" id="display">
+      <div class="title">九宫格计数器（触碰底部按钮）</div>
+      <div class="summary" id="summary">当前计数</div>
+      <div class="counts" id="countList" aria-hidden="false"></div>
+
+      <!-- 工具区域：导出 / 重置 -->
+      <div style="margin-top:.8rem; display:flex; gap:.5rem;">
+        <button id="exportBtn" style="border:none; padding:.45rem .65rem; border-radius:10px; background:#111827;color:white;">导出</button>
+        <button id="resetBtn" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
+      </div>
+    </section>
+
+    <!-- 下半屏九宫格按钮区域 -->
+    <section class="grid-wrap" aria-hidden="false">
+      <div class="grid" role="application" aria-label="九宫格按键区域，数字 1 到 9">
+        <button class="grid-btn" data-num="1">1</button>
+        <button class="grid-btn" data-num="2">2</button>
+        <button class="grid-btn" data-num="3">3</button>
+        <button class="grid-btn" data-num="4">4</button>
+        <button class="grid-btn" data-num="5">5</button>
+        <button class="grid-btn" data-num="6">6</button>
+        <button class="grid-btn" data-num="7">7</button>
+        <button class="grid-btn" data-num="8">8</button>
+        <button class="grid-btn" data-num="9">9</button>
+      </div>
+    </section>
+
+    <!-- 屏幕阅读器实时播报区域 -->
+    <div id="ariaLive" class="sr-only" aria-live="polite"></div>
+
+    <!-- 轻提示 -->
+    <div id="hintBar" class="bar" role="status" aria-hidden="true"></div>
+  </main>
+
+  <script>
+    const counts = JSON.parse(localStorage.getItem("counts") || "{}");
+    const countList = document.getElementById("countList");
+    const summary = document.getElementById("summary");
+    const ariaLive = document.getElementById("ariaLive");
+    const hintBar = document.getElementById("hintBar");
+
+    function renderCounts() {
+      countList.innerHTML = "";
+      const entries = Object.entries(counts);
+      if (entries.length === 0) {
+        summary.textContent = "当前计数为空";
+        return;
+      }
+      summary.textContent = "当前计数：";
+      entries.forEach(([num, val]) => {
+        const div = document.createElement("div");
+        div.textContent = `数字 ${num} 已点击 ${val} 次`;
+        countList.appendChild(div);
+      });
+    }
+
+    document.querySelectorAll(".grid-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const num = btn.dataset.num;
+        counts[num] = (counts[num] || 0) + 1;
+        localStorage.setItem("counts", JSON.stringify(counts));
+        renderCounts();
+        ariaLive.textContent = `数字 ${num} 已加 1，总计 ${counts[num]} 次`;
+      });
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      Object.keys(counts).forEach(k => delete counts[k]);
+      localStorage.removeItem("counts");
+      renderCounts();
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(counts, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "counts.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    renderCounts();
+
+    // 注册 Service Worker 以支持离线访问
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => {
+            console.log('Service Worker 注册成功:', reg.scope);
+
+            // 检测新版本
+            reg.onupdatefound = () => {
+              const newWorker = reg.installing;
+              newWorker.onstatechange = () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateBar();
+                }
+              };
+            };
+          })
+          .catch(err => console.error('Service Worker 注册失败:', err));
+      });
+
+      // 当新 SW 接管后，刷新页面
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    }
+
+    // 显示更新提示条
+    function showUpdateBar() {
+      const bar = document.getElementById('hintBar');
+      bar.textContent = '发现新版本，点击刷新';
+      bar.setAttribute('aria-hidden', 'false');
+      bar.classList.add('show');
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('click', () => {
+        if (navigator.serviceWorker.waiting) {
+          navigator.serviceWorker.waiting.postMessage({ action: 'skipWaiting' });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
