@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <!-- 防止移动端双击缩放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>九宫格计数器</title>
   <meta name="description" content="下半屏九宫格按钮（1-9），点击对应数字计数并在上半屏显示的轻量移动网页小程序示例。" />
   <link rel="icon" href="assets/icon.png" />
@@ -17,56 +18,21 @@
       height: 100vh;
       background: #f9fafb;
       color: #111827;
+      touch-action: manipulation; /* 禁止双击缩放 */
+      -webkit-tap-highlight-color: transparent; /* 去掉点击高亮 */
+      user-select: none; /* 禁止选中文本 */
     }
-    .app {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-    .display {
-      flex: 1;
-      padding: 1rem;
-      overflow-y: auto;
-    }
-    .title {
-      font-size: 1.3rem;
-      font-weight: bold;
-      margin-bottom: .5rem;
-    }
-    .summary {
-      font-size: 1.1rem;
-      margin-bottom: .5rem;
-    }
-    .counts .row {
-      display: flex;
-      align-items: center;
-      margin-bottom: .4rem;
-    }
-    .counts .row span {
-      width: 1.5rem;
-      font-weight: bold;
-    }
-    .box {
-      width: 18px;
-      height: 18px;
-      margin: 2px;
-      border: 1px solid #374151;
-      display: inline-block;
-      border-radius: 3px;
-    }
+    .app { flex: 1; display: flex; flex-direction: column; }
+    .display { flex: 1; padding: 1rem; overflow-y: auto; }
+    .title { font-size: 1.3rem; font-weight: bold; margin-bottom: .5rem; }
+    .summary { font-size: 1.1rem; margin-bottom: .5rem; }
+    .counts .row { display: flex; align-items: center; margin-bottom: .4rem; }
+    .counts .row span { width: 1.5rem; font-weight: bold; }
+    .box { width: 18px; height: 18px; margin: 2px; border: 1px solid #374151; display: inline-block; border-radius: 3px; }
     .green { background: #4caf50; }
     .gray { background: #d1d5db; }
-
-    .grid-wrap {
-      background: #fff;
-      border-top: 1px solid #e5e7eb;
-      padding: .5rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: .5rem;
-    }
+    .grid-wrap { background: #fff; border-top: 1px solid #e5e7eb; padding: .5rem; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
     .grid-btn {
       aspect-ratio: 1;
       font-size: 1.4rem;
@@ -75,9 +41,9 @@
       border: 1px solid #d1d5db;
       background: #f3f4f6;
       transition: background .2s;
+      touch-action: manipulation; /* 避免按钮双击缩放 */
     }
     .grid-btn:active { background: #dbeafe; }
-
     .bar {
       position: fixed;
       bottom: -3rem;
@@ -92,35 +58,22 @@
       z-index: 1000;
     }
     .bar.show { bottom: 1.2rem; }
-
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      border: 0;
-    }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
   </style>
 </head>
 <body>
   <main class="app" id="app">
-    <!-- 上半屏显示区域 -->
     <section class="display" id="display">
       <div class="title">九宫格计数器（触碰底部按钮）</div>
       <div class="summary" id="summary">当前计数</div>
       <div class="counts" id="countList" aria-hidden="false"></div>
 
-      <!-- 工具区域：导出 / 重置 -->
       <div style="margin-top:.8rem; display:flex; gap:.5rem;">
         <button id="exportBtn" style="border:none; padding:.45rem .65rem; border-radius:10px; background:#111827;color:white;">导出</button>
         <button id="resetBtn" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
       </div>
     </section>
 
-    <!-- 下半屏九宫格按钮区域 -->
     <section class="grid-wrap" aria-hidden="false">
       <div class="grid" role="application" aria-label="九宫格按键区域，数字 1 到 9">
         <button class="grid-btn" data-num="1">1</button>
@@ -135,25 +88,29 @@
       </div>
     </section>
 
-    <!-- 屏幕阅读器实时播报区域 -->
     <div id="ariaLive" class="sr-only" aria-live="polite"></div>
-
-    <!-- 轻提示 -->
     <div id="hintBar" class="bar" role="status" aria-hidden="true"></div>
   </main>
 
   <script>
-    // 初始化状态：记录每行有多少个灰框
+    // 阻止快速双击缩放
+    let lastTouchTime = 0;
+    document.addEventListener('touchstart', function(event) {
+      const now = new Date().getTime();
+      if (now - lastTouchTime <= 300) {
+        event.preventDefault();
+      }
+      lastTouchTime = now;
+    }, { passive: false });
+
+    // 初始化状态
     let state = JSON.parse(localStorage.getItem("counterState") || "{}");
-    for (let i = 1; i <= 9; i++) {
-      if (state[i] === undefined) state[i] = 0;
-    }
+    for (let i = 1; i <= 9; i++) if (state[i] === undefined) state[i] = 0;
 
     const countList = document.getElementById("countList");
     const summary = document.getElementById("summary");
     const ariaLive = document.getElementById("ariaLive");
 
-    // 渲染
     function renderCounts() {
       countList.innerHTML = "";
       let hasAny = false;
@@ -161,28 +118,20 @@
         const row = document.createElement("div");
         row.className = "row";
         row.setAttribute("data-num", i);
-
         const label = document.createElement("span");
         label.textContent = i;
         row.appendChild(label);
-
         for (let j = 0; j < i; j++) {
           const box = document.createElement("div");
-          if (j < i - state[i]) {
-            box.className = "box green";
-          } else {
-            box.className = "box gray";
-          }
+          box.className = j < i - state[i] ? "box green" : "box gray";
           row.appendChild(box);
         }
-
         countList.appendChild(row);
         if (state[i] > 0) hasAny = true;
       }
       summary.textContent = hasAny ? "当前状态：" : "当前计数为空";
     }
 
-    // 按钮点击
     document.querySelectorAll(".grid-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const num = parseInt(btn.dataset.num);
@@ -195,14 +144,12 @@
       });
     });
 
-    // 重置
     document.getElementById("resetBtn").addEventListener("click", () => {
       for (let i = 1; i <= 9; i++) state[i] = 0;
       localStorage.setItem("counterState", JSON.stringify(state));
       renderCounts();
     });
 
-    // 导出
     document.getElementById("exportBtn").addEventListener("click", () => {
       const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
       const url = URL.createObjectURL(blob);
@@ -232,9 +179,7 @@
           })
           .catch(err => console.error('Service Worker 注册失败:', err));
       });
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
-      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
     }
 
     function showUpdateBar() {
