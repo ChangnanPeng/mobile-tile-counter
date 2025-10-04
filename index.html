@@ -82,7 +82,6 @@
       <div class="summary" id="summary">当前计数</div>
       <div class="counts" id="countList" aria-hidden="false"></div>
 
-      <!-- 工具按钮区域 -->
       <div style="margin-top:.8rem; display:flex; gap:.5rem; flex-wrap: wrap;">
         <button id="exportBtn" style="border:none; padding:.45rem .65rem; border-radius:10px; background:#111827;color:white;">导出</button>
         <button id="resetBtn" data-mode="normal" style="border:1px solid #e5e7eb; padding:.45rem .65rem; border-radius:10px; background:white;">重置</button>
@@ -108,7 +107,6 @@
     <div id="ariaLive" class="sr-only" aria-live="polite"></div>
     <div id="hintBar" class="bar" role="status" aria-hidden="true"></div>
 
-    <!-- 能力覆盖层 -->
     <div id="abilityOverlay">
 <pre>
 1 古代巨龙 
@@ -148,139 +146,131 @@
     let lastTouchTime = 0;
     document.addEventListener('touchstart', function(event) {
       const now = new Date().getTime();
-      if (now - lastTouchTime <= 50) { event.preventDefault(); }
+      if (now - lastTouchTime <= 50) event.preventDefault();
       lastTouchTime = now;
     }, { passive: false });
 
     // 初始化状态
     let state = JSON.parse(localStorage.getItem("counterState") || "{}");
-    for (let i = 1; i <= 9; i++) if (state[i] === undefined) state[i] = 0;
+    for (let i=1;i<=9;i++) if(state[i]===undefined) state[i]=0;
 
     const countList = document.getElementById("countList");
-    const summary = document.getElementById("summary");
     const title = document.getElementById("title");
+    const summary = document.getElementById("summary");
     const ariaLive = document.getElementById("ariaLive");
     const totalGreenBoxes = 1+2+3+4+5+6+7+8+9; // 45
 
-    let mode = "increase"; // 默认增加模式
+    let mode = "increase";
     const toggleBtn = document.getElementById("toggleBtn");
-    toggleBtn.addEventListener("click", () => {
-      mode = mode === "increase" ? "decrease" : "increase";
-      toggleBtn.textContent = mode === "increase" ? "+/-" : "+/- (减少)";
-      toggleBtn.style.background = mode === "increase" ? "#f97316" : "#4b5563";
+    toggleBtn.addEventListener("click",()=>{
+      mode = mode==="increase"?"decrease":"increase";
+      toggleBtn.textContent = mode==="increase"?"+/-":"+/- (减少)";
+      toggleBtn.style.background = mode==="increase"?"#f97316":"#4b5563";
     });
 
-    function renderCounts() {
-      countList.innerHTML = "";
-      let hasAny = false;
-      let remaining = 0;
+    let backupState = null;
+    const resetBtn = document.getElementById("resetBtn");
 
-      for (let i = 1; i <= 9; i++) {
-        const row = document.createElement("div");
-        row.className = "row";
-        row.setAttribute("data-num", i);
-
-        const label = document.createElement("span");
-        label.textContent = i;
+    function renderCounts(){
+      countList.innerHTML="";
+      let remaining=0;
+      for(let i=1;i<=9;i++){
+        const row=document.createElement("div");
+        row.className="row";
+        row.setAttribute("data-num",i);
+        const label=document.createElement("span");
+        label.textContent=i;
         row.appendChild(label);
-
-        for (let j = 0; j < i; j++) {
-          const box = document.createElement("div");
-          if (j < i - state[i]) {
-            box.className = "box green";
+        for(let j=0;j<i;j++){
+          const box=document.createElement("div");
+          if(j<i-state[i]){
+            box.className="box green";
             remaining++;
-          } else {
-            box.className = "box gray";
-          }
+          }else box.className="box gray";
           row.appendChild(box);
         }
-
         countList.appendChild(row);
-        if (state[i] > 0) hasAny = true;
       }
-
-      title.textContent = `九宫格计数器（剩余 ${remaining}/${totalGreenBoxes}）`;
-      summary.textContent = hasAny ? "当前状态：" : "当前计数为空";
+      title.textContent=`九宫格计数器（剩余 ${remaining}/${totalGreenBoxes}）`;
+      summary.textContent=remaining<totalGreenBoxes?"当前状态：":"当前计数为空";
     }
 
-    // 数字按钮
-    document.querySelectorAll(".grid-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const num = parseInt(btn.dataset.num);
-        if (mode === "increase") {
-          if (state[num] < num) { state[num]++; renderCounts(); ariaLive.textContent = `数字 ${num} 变灰 ${state[num]} 个方框`; }
-        } else {
-          if (state[num] > 0) { state[num]--; renderCounts(); ariaLive.textContent = `数字 ${num} 变绿 ${state[num]} 个方框`; }
+    // 数字按钮事件
+    document.querySelectorAll(".grid-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const num=parseInt(btn.dataset.num);
+        if(mode==="increase"&&state[num]<num) state[num]++;
+        else if(mode==="decrease"&&state[num]>0) state[num]--;
+        localStorage.setItem("counterState",JSON.stringify(state));
+        renderCounts();
+        ariaLive.textContent=`数字 ${num} 计数已更新`;
+
+        // 点击数字时恢复重置按钮
+        if(resetBtn.dataset.mode==="undo"){
+          resetBtn.textContent="重置";
+          resetBtn.dataset.mode="normal";
+          backupState=null;
         }
-        localStorage.setItem("counterState", JSON.stringify(state));
       });
     });
 
-    // 重置按钮（增加撤销功能）
-    let backupState = null;
-    const resetBtn = document.getElementById("resetBtn");
-    resetBtn.addEventListener("click", () => {
-      if (resetBtn.dataset.mode === "undo") {
-        // 撤销重置
-        if (backupState) { state = JSON.parse(JSON.stringify(backupState)); renderCounts(); localStorage.setItem("counterState", JSON.stringify(state)); }
-        backupState = null;
-        resetBtn.textContent = "重置";
-        resetBtn.dataset.mode = "normal";
-      } else {
-        // 执行重置
-        backupState = JSON.parse(JSON.stringify(state));
-        for (let i = 1; i <= 9; i++) state[i] = 0;
+    // 重置按钮
+    resetBtn.addEventListener("click",()=>{
+      if(resetBtn.dataset.mode==="undo"){
+        if(backupState){state=JSON.parse(JSON.stringify(backupState)); localStorage.setItem("counterState",JSON.stringify(state)); renderCounts();}
+        backupState=null;
+        resetBtn.textContent="重置";
+        resetBtn.dataset.mode="normal";
+      }else{
+        backupState=JSON.parse(JSON.stringify(state));
+        for(let i=1;i<=9;i++) state[i]=0;
+        localStorage.setItem("counterState",JSON.stringify(state));
         renderCounts();
-        localStorage.setItem("counterState", JSON.stringify(state));
-        resetBtn.textContent = "重置（撤销）";
-        resetBtn.dataset.mode = "undo";
+        resetBtn.textContent="重置（撤销）";
+        resetBtn.dataset.mode="undo";
       }
     });
 
     // 导出按钮
-    document.getElementById("exportBtn").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "state.json";
-      a.click();
+    document.getElementById("exportBtn").addEventListener("click",()=>{
+      const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url; a.download="state.json"; a.click();
       URL.revokeObjectURL(url);
     });
 
     // 能力按钮
-    const abilityBtn = document.getElementById("abilityBtn");
-    const abilityOverlay = document.getElementById("abilityOverlay");
-    abilityBtn.addEventListener("click", () => { abilityOverlay.style.display = "block"; });
-    abilityOverlay.addEventListener("click", () => { abilityOverlay.style.display = "none"; });
+    const abilityBtn=document.getElementById("abilityBtn");
+    const abilityOverlay=document.getElementById("abilityOverlay");
+    abilityBtn.addEventListener("click",()=>{abilityOverlay.style.display="block";});
+    abilityOverlay.addEventListener("click",()=>{abilityOverlay.style.display="none";});
 
     renderCounts();
 
     // Service Worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>{
         navigator.serviceWorker.register('sw.js')
-          .then(reg => {
-            console.log('Service Worker 注册成功:', reg.scope);
-            reg.onupdatefound = () => {
-              const newWorker = reg.installing;
-              newWorker.onstatechange = () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) showUpdateBar();
-              };
-            };
-          })
-          .catch(err => console.error('Service Worker 注册失败:', err));
+        .then(reg=>{
+          console.log('Service Worker 注册成功:',reg.scope);
+          reg.onupdatefound=()=>{
+            const newWorker=reg.installing;
+            newWorker.onstatechange=()=>{
+              if(newWorker.state==='installed'&&navigator.serviceWorker.controller) showUpdateBar();
+            }
+          }
+        }).catch(err=>console.error('Service Worker 注册失败:',err));
       });
-      navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+      navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
     }
-
-    function showUpdateBar() {
-      const bar = document.getElementById('hintBar');
-      bar.textContent = '发现新版本，点击刷新';
-      bar.setAttribute('aria-hidden', 'false');
+    function showUpdateBar(){
+      const bar=document.getElementById('hintBar');
+      bar.textContent='发现新版本，点击刷新';
+      bar.setAttribute('aria-hidden','false');
       bar.classList.add('show');
-      bar.style.cursor = 'pointer';
-      bar.addEventListener('click', () => { if (navigator.serviceWorker.waiting) navigator.serviceWorker.waiting.postMessage({ action: 'skipWaiting' }); });
+      bar.style.cursor='pointer';
+      bar.addEventListener('click',()=>{if(navigator.serviceWorker.waiting) navigator.serviceWorker.waiting.postMessage({action:'skipWaiting'});});
     }
   </script>
 </body>
