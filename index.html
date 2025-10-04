@@ -22,10 +22,14 @@ body {
   user-select: none;
 }
 .app { flex: 1; display: flex; flex-direction: column; }
-.display { flex: 0 0 45%; padding: 0.8rem 1rem 0.4rem 1rem; overflow-y: auto; }
+.display {
+  flex: 0 0 auto; /* 高度随内容自适应 */
+  padding: 0.8rem 1rem 0 1rem; /* 去掉底部 padding */
+}
 .title { font-size: 1.3rem; font-weight: bold; margin-bottom: 0.3rem; }
-.counts { margin: 0; padding: 0; }
+.counts { margin: 0; padding: 0; line-height: 1.2; }
 .counts .row { display: flex; align-items: center; margin: 0 0 2px 0; }
+.counts .row:last-child { margin-bottom: 0; } /* 去掉最后一行下方空白 */
 .counts .row span { width: 1.5rem; font-weight: bold; }
 .box { width: 18px; height: 18px; margin: 2px; border: 1px solid #374151; display: inline-block; border-radius: 3px; }
 .green { background: #4caf50; }
@@ -35,7 +39,7 @@ body {
 #abilityBtn { background:#0f62fe; border:1px solid #0f62fe; }
 #toggleBtn { background:#f97316; border:1px solid #f97316; }
 #resetBtn { background:white; color:#111827; border:1px solid #e5e7eb; }
-.grid-wrap { flex:1; background: #fff; border-top: 1px solid #e5e7eb; padding: .5rem; display:flex; align-items:center; }
+.grid-wrap { flex: 1; background: #fff; border-top: 1px solid #e5e7eb; padding: 0.5rem; display:flex; align-items:flex-start; } /* 顶部对齐九宫格 */
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; width: 100%; }
 .grid-btn {
   font-size: 1.4rem;
@@ -45,7 +49,7 @@ body {
   background: #f3f4f6;
   transition: background .2s;
   touch-action: manipulation;
-  aspect-ratio: 1/0.7; /* 更扁 */
+  aspect-ratio: 1/0.7; /* 扁一点 */
 }
 .grid-btn:active { background: #dbeafe; }
 .bar {
