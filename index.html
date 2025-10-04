@@ -79,7 +79,7 @@
 <body>
   <main class="app" id="app">
     <section class="display" id="display">
-      <div class="title">九宫格计数器（触碰底部按钮）</div>
+      <div class="title" id="title">九宫格计数器（剩余 45/45）</div>
       <div class="summary" id="summary">当前计数</div>
       <div class="counts" id="countList" aria-hidden="false"></div>
 
@@ -113,31 +113,22 @@
 <pre>
 1 古代巨龙 
 掷骰：所有其他的玩家根据掷骰结果失去相当数量的生命。召唤巨龙失败则你失去相当数量的生命。
-
 2 黑暗幽灵
 所有其他玩家失去1点生命。你获得1点生命（最多6点生命）。
-
 3 甜蜜的梦
 掷骰：根据掷骰结果，你获得相当数量的生命（最多6点生命）。
-
 4 猫头鹰
 你可以查看一个秘密咒语石，并放到你的面前。如果这一轮你存活，每个可以让你额外多得1分。
-
 5 闪电暴风雨
 你左手和右手边的玩家各失去1点生命。
-
 6 暴风雪
 你左手边的玩家失去1点生命。
-
 7 火球
 你右手边的玩家失去1点生命。
-
 8 魔法药水
 你获得1点生命（最多6点生命）。
-
 9 力量药水
 你把成功使用的力量药水放到你的面前。每2个力量药水可以让你在使其他玩家失去生命时，失去生命的点数+1。
-
 （点击屏幕任意位置关闭此页面）
 </pre>
     </div>
@@ -148,7 +139,7 @@
     let lastTouchTime = 0;
     document.addEventListener('touchstart', function(event) {
       const now = new Date().getTime();
-      if (now - lastTouchTime <= 50) { event.preventDefault(); }
+      if (now - lastTouchTime <= 300) { event.preventDefault(); }
       lastTouchTime = now;
     }, { passive: false });
 
@@ -158,29 +149,44 @@
 
     const countList = document.getElementById("countList");
     const summary = document.getElementById("summary");
+    const title = document.getElementById("title");
     const ariaLive = document.getElementById("ariaLive");
+    const totalGreenBoxes = 1+2+3+4+5+6+7+8+9; // 45
 
     function renderCounts() {
       countList.innerHTML = "";
       let hasAny = false;
+      let remaining = 0;
+
       for (let i = 1; i <= 9; i++) {
         const row = document.createElement("div");
         row.className = "row";
         row.setAttribute("data-num", i);
+
         const label = document.createElement("span");
         label.textContent = i;
         row.appendChild(label);
+
         for (let j = 0; j < i; j++) {
           const box = document.createElement("div");
-          box.className = j < i - state[i] ? "box green" : "box gray";
+          if (j < i - state[i]) {
+            box.className = "box green";
+            remaining++;
+          } else {
+            box.className = "box gray";
+          }
           row.appendChild(box);
         }
+
         countList.appendChild(row);
         if (state[i] > 0) hasAny = true;
       }
+
+      title.textContent = `九宫格计数器（剩余 ${remaining}/${totalGreenBoxes}）`;
       summary.textContent = hasAny ? "当前状态：" : "当前计数为空";
     }
 
+    // 数字按钮点击
     document.querySelectorAll(".grid-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const num = parseInt(btn.dataset.num);
@@ -211,7 +217,7 @@
       URL.revokeObjectURL(url);
     });
 
-    // 能力按钮 & 覆盖层
+    // 能力按钮
     const abilityBtn = document.getElementById("abilityBtn");
     const abilityOverlay = document.getElementById("abilityOverlay");
     abilityBtn.addEventListener("click", () => { abilityOverlay.style.display = "block"; });
