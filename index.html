@@ -37,9 +37,26 @@
       font-size: 1.1rem;
       margin-bottom: .5rem;
     }
-    .counts {
-      line-height: 1.8;
+    .counts .row {
+      display: flex;
+      align-items: center;
+      margin-bottom: .4rem;
     }
+    .counts .row span {
+      width: 1.5rem;
+      font-weight: bold;
+    }
+    .box {
+      width: 18px;
+      height: 18px;
+      margin: 2px;
+      border: 1px solid #374151;
+      display: inline-block;
+      border-radius: 3px;
+    }
+    .green { background: #4caf50; }
+    .gray { background: #d1d5db; }
+
     .grid-wrap {
       background: #fff;
       border-top: 1px solid #e5e7eb;
@@ -59,9 +76,8 @@
       background: #f3f4f6;
       transition: background .2s;
     }
-    .grid-btn:active {
-      background: #dbeafe;
-    }
+    .grid-btn:active { background: #dbeafe; }
+
     .bar {
       position: fixed;
       bottom: -3rem;
@@ -75,9 +91,8 @@
       transition: bottom .3s;
       z-index: 1000;
     }
-    .bar.show {
-      bottom: 1.2rem;
-    }
+    .bar.show { bottom: 1.2rem; }
+
     .sr-only {
       position: absolute;
       width: 1px;
@@ -128,63 +143,84 @@
   </main>
 
   <script>
-    const counts = JSON.parse(localStorage.getItem("counts") || "{}");
+    // 初始化状态：记录每行有多少个灰框
+    let state = JSON.parse(localStorage.getItem("counterState") || "{}");
+    for (let i = 1; i <= 9; i++) {
+      if (state[i] === undefined) state[i] = 0;
+    }
+
     const countList = document.getElementById("countList");
     const summary = document.getElementById("summary");
     const ariaLive = document.getElementById("ariaLive");
-    const hintBar = document.getElementById("hintBar");
 
+    // 渲染
     function renderCounts() {
       countList.innerHTML = "";
-      const entries = Object.entries(counts);
-      if (entries.length === 0) {
-        summary.textContent = "当前计数为空";
-        return;
+      let hasAny = false;
+      for (let i = 1; i <= 9; i++) {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.setAttribute("data-num", i);
+
+        const label = document.createElement("span");
+        label.textContent = i;
+        row.appendChild(label);
+
+        for (let j = 0; j < i; j++) {
+          const box = document.createElement("div");
+          if (j < i - state[i]) {
+            box.className = "box green";
+          } else {
+            box.className = "box gray";
+          }
+          row.appendChild(box);
+        }
+
+        countList.appendChild(row);
+        if (state[i] > 0) hasAny = true;
       }
-      summary.textContent = "当前计数：";
-      entries.forEach(([num, val]) => {
-        const div = document.createElement("div");
-        div.textContent = `数字 ${num} 已点击 ${val} 次`;
-        countList.appendChild(div);
-      });
+      summary.textContent = hasAny ? "当前状态：" : "当前计数为空";
     }
 
+    // 按钮点击
     document.querySelectorAll(".grid-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const num = btn.dataset.num;
-        counts[num] = (counts[num] || 0) + 1;
-        localStorage.setItem("counts", JSON.stringify(counts));
-        renderCounts();
-        ariaLive.textContent = `数字 ${num} 已加 1，总计 ${counts[num]} 次`;
+        const num = parseInt(btn.dataset.num);
+        if (state[num] < num) {
+          state[num]++;
+          localStorage.setItem("counterState", JSON.stringify(state));
+          renderCounts();
+          ariaLive.textContent = `数字 ${num} 变灰 ${state[num]} 个方框`;
+        }
       });
     });
 
+    // 重置
     document.getElementById("resetBtn").addEventListener("click", () => {
-      Object.keys(counts).forEach(k => delete counts[k]);
-      localStorage.removeItem("counts");
+      for (let i = 1; i <= 9; i++) state[i] = 0;
+      localStorage.setItem("counterState", JSON.stringify(state));
       renderCounts();
     });
 
+    // 导出
     document.getElementById("exportBtn").addEventListener("click", () => {
-      const blob = new Blob([JSON.stringify(counts, null, 2)], {type:"application/json"});
+      const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "counts.json";
+      a.download = "state.json";
       a.click();
       URL.revokeObjectURL(url);
     });
 
     renderCounts();
 
-    // 注册 Service Worker 以支持离线访问
+    // 注册 Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js')
           .then(reg => {
             console.log('Service Worker 注册成功:', reg.scope);
-
-            // 检测新版本
             reg.onupdatefound = () => {
               const newWorker = reg.installing;
               newWorker.onstatechange = () => {
@@ -196,14 +232,11 @@
           })
           .catch(err => console.error('Service Worker 注册失败:', err));
       });
-
-      // 当新 SW 接管后，刷新页面
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         window.location.reload();
       });
     }
 
-    // 显示更新提示条
     function showUpdateBar() {
       const bar = document.getElementById('hintBar');
       bar.textContent = '发现新版本，点击刷新';
